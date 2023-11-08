@@ -1,21 +1,73 @@
-const net = require('net');
+function criarSegmentoMSH(identificadorRemetente, sistemaInformacaoRemetente, identificadorDestinatario, sistemaInformacaoDestinatario, dataHoraMensagem, tipoMensagem, identificadorMensagem, prioridade, versao) {
+    const valores = [identificadorRemetente, sistemaInformacaoRemetente, identificadorDestinatario, sistemaInformacaoDestinatario, dataHoraMensagem, '', tipoMensagem, identificadorMensagem, prioridade, versao];
+    return {
+      nome: 'MSH',
+      valores: valores
+    };
+}
+  
+function criarSegmentoEVN(dataHoraMensagem) {
+return {
+    nome: 'EVN',
+    valores: ['A01', dataHoraMensagem]
+};
+}
 
-const server = net.createServer((socket) => {
-  // Lógica para lidar com as conexões Telnet
-  socket.write('Bem-vindo ao servidor Telnet!\r\n');
-  socket.pipe(socket);
+function criarSegmentoPID(numeroIdentificacao, nomePaciente, dataNascimento, sexo, endereco, telefone, estadoCivil) {
+const valores = ['1', numeroIdentificacao, '', nomePaciente, '', dataNascimento, sexo, '', '', endereco, '', '', telefone, '', '', estadoCivil];
+return {
+    nome: 'PID',
+    valores: valores
+};
+}
 
-  socket.on('data', data => {
-    const mensagem = data.toString();
-    console.log('Mensagem recebida:', mensagem);
+function criarSegmentoPV1(tipoPaciente, localAdmissao, medicoResponsavel) {
+const valores = ['1', tipoPaciente, '', '', '', localAdmissao, '', '', '', '', '', '', '', '', '', '', '', '', '', medicoResponsavel];
+return {
+    nome: 'PV1',
+    valores: valores
+};
+}
 
-    // Faça o processamento da mensagem aqui
+function criarSegmentoIN1(planoSaude) {
+return {
+    nome: 'IN1',
+    valores: ['1', planoSaude]
+};
+}
 
-    // Envie uma resposta ao cliente (opcional)
-    socket.write('Mensagem recebida com sucesso!\r\n');
-  });
-});
+function criarMensagemADT(
+identificadorRemetente,
+sistemaInformacaoRemetente,
+identificadorDestinatario,
+sistemaInformacaoDestinatario,
+dataHoraMensagem,
+tipoMensagem,
+identificadorMensagem,
+prioridade,
+versao,
+numeroIdentificacao,
+nomePaciente,
+dataNascimento,
+sexo,
+endereco,
+telefone,
+estadoCivil,
+localAdmissao,
+tipoPaciente,
+medicoResponsavel,
+planoSaude
+) {
+    const segmentoMSH = criarSegmentoMSH(identificadorRemetente, sistemaInformacaoRemetente, identificadorDestinatario, sistemaInformacaoDestinatario, dataHoraMensagem, tipoMensagem, identificadorMensagem, prioridade, versao);
+    const segmentoEVN = criarSegmentoEVN(dataHoraMensagem);
+    const segmentoPID = criarSegmentoPID(numeroIdentificacao, nomePaciente, dataNascimento, sexo, endereco, telefone, estadoCivil);
+    const segmentoPV1 = criarSegmentoPV1(tipoPaciente, localAdmissao, medicoResponsavel);
+    const segmentoIN1 = criarSegmentoIN1(planoSaude);
 
-server.listen(21000, '127.0.0.1', () => {
-  console.log('Servidor Telnet iniciado na porta 23');
-});
+    const segmentos = [segmentoMSH, segmentoEVN, segmentoPID, segmentoPV1, segmentoIN1];
+
+    const mensagem = segmentos.map(segmento => `${segmento.nome}|${segmento.valores.join('|')}`).join('\n');
+    return mensagem;
+}
+
+module.exports = criarMensagemADT;
